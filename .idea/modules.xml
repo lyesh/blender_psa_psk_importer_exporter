@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/blender-module/blender-module.iml" filepath="$PROJECT_DIR$/blender-module/blender-module.iml" />
+      <module fileurl="file://$PROJECT_DIR$/blender_psa_psk_importer_exporter.iml" filepath="$PROJECT_DIR$/blender_psa_psk_importer_exporter.iml" />
+    </modules>
+  </component>
+</project>
