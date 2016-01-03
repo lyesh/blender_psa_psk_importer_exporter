@@ -358,15 +358,9 @@ def pskimport(infile,importmesh,importbone,bDebugLogPSK,importmultiuvtextures):
         bni_dict[createbone.name] = createbone.bone_index
 
         #w,x,y,z
-        if (counter == 0):#main parent
-            createbone.bindmat = mathutils.Quaternion((indata[7], indata[4], indata[5], indata[6])).to_matrix()
-            createbone.origmat = mathutils.Quaternion((indata[7], indata[4], indata[5], indata[6])).to_matrix()
-        else:
-            createbone.bindmat = mathutils.Quaternion((indata[7], indata[4], indata[5], indata[6])).to_matrix()
-            createbone.origmat = mathutils.Quaternion((indata[7], indata[4], indata[5], indata[6])).to_matrix()
+        rotationMatrix = mathutils.Quaternion((indata[7], indata[4], indata[5], indata[6])).to_matrix()
 
-        createbone.bindmat = mathutils.Matrix.Translation(mathutils.Vector((indata[8], indata[9], indata[10]))) * \
-                             createbone.bindmat.to_4x4()
+        createbone.bindmat = createbone.origmat = rotationMatrix
 
         md5_bones.append(createbone)
         counter = counter + 1
