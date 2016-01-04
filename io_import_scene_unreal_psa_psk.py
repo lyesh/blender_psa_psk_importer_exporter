@@ -357,10 +357,17 @@ def pskimport(infile,importmesh,importbone,bDebugLogPSK,importmultiuvtextures):
 
         bni_dict[createbone.name] = createbone.bone_index
 
-        #w,x,y,z
-        rotationMatrix = mathutils.Quaternion((indata[7], indata[4], indata[5], indata[6])).to_matrix()
+        rotx = indata[4]
+        roty = indata[5]
+        rotz = indata[6]
+        rotw = indata[7]
 
-        createbone.bindmat = createbone.origmat = rotationMatrix
+        rotationMatrix = mathutils.Quaternion((rotw, rotx, rotz, roty)).to_matrix()
+
+        translationMatrix = mathutils.Matrix.Translation(mathutils.Vector((indata[8], indata[9], indata[10])))
+
+        createbone.origmat = rotationMatrix
+        createbone.bindmat = translationMatrix * rotationMatrix.to_4x4()
 
         md5_bones.append(createbone)
         counter = counter + 1
@@ -1279,4 +1286,4 @@ if __name__ == "__main__":
 #note this only read the data and will not be place in the scene
 #getInputFilename('C:\\blenderfiles\\BotA.psk')
 #getInputFilename('C:\\blenderfiles\\AA.PSK')
-pskimport('/Users/ailish/chloe-model/SkeletalMesh3/CH_M_Chloe01_EP4.psk', True, True, False, True)
+#pskimport('/Users/ailish/chloe-model/SkeletalMesh3/CH_M_Chloe01_EP4.psk', True, True, False, True)
