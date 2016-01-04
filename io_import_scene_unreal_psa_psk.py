@@ -361,10 +361,13 @@ def pskimport(infile,importmesh,importbone,bDebugLogPSK,importmultiuvtextures):
         roty = indata[5]
         rotz = indata[6]
         rotw = indata[7]
+# default is w, x, y, z
+        rotationMatrix = mathutils.Quaternion((rotw, rotx, roty, rotz)).to_matrix()
 
-        rotationMatrix = mathutils.Quaternion((rotw, rotx, rotz, roty)).to_matrix()
-
-        translationMatrix = mathutils.Matrix.Translation(mathutils.Vector((indata[8], indata[9], indata[10])))
+        translationX = indata[8]
+        translationY = indata[9]
+        translationZ = indata[10]
+        translationMatrix = mathutils.Matrix.Translation(mathutils.Vector((translationX,-translationY,translationZ)))
 
         createbone.origmat = rotationMatrix
         createbone.bindmat = translationMatrix * rotationMatrix.to_4x4()
