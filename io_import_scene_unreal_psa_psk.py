@@ -129,34 +129,34 @@ def getheadpos(pbone,bones):
 
 def gettailpos(pbone,bones):
     pos_tail = [0.0] * 3
-    ischildfound = False
-    childbone = None
-    childbonelist = []
-    for bone in bones:
-        if bone.parent.name == pbone.name:
-            ischildfound = True
-            childbone = bone
-            childbonelist.append(bone)
+    # ischildfound = False
+    # childbonelist = []
+    # for bone in bones:
+    #     if bone.parent.name == pbone.name:
+    #         ischildfound = True
+    #         childbonelist.append(bone)
+    #
+    # if ischildfound:
+    #     tmp_head = [0.0] * 3
+    #     for bone in childbonelist:
+    #         tmp_head[0] += bone.head[0]
+    #         tmp_head[1] += bone.head[1]
+    #         tmp_head[2] += bone.head[2]
+    #     tmp_head[0] /= len(childbonelist)
+    #     tmp_head[1] /= len(childbonelist)
+    #     tmp_head[2] /= len(childbonelist)
+    #     return tmp_head
+    # else:
+    #     tmp_len = 0.0
+    #     tmp_len += (pbone.head[0] - pbone.parent.head[0]) ** 2
+    #     tmp_len += (pbone.head[1] - pbone.parent.head[1]) ** 2
+    #     tmp_len += (pbone.head[2] - pbone.parent.head[2]) ** 2
+    #     tmp_len = tmp_len ** 0.5 * 0.5
+    #     pos_tail[0] = pbone.head[0] + tmp_len * (pbone.bindmat[0][0]*pbone.bindmat[0][1]*pbone.bindmat[0][2])
+    #     pos_tail[1] = pbone.head[1] + tmp_len * (pbone.bindmat[1][0]*pbone.bindmat[1][1]*pbone.bindmat[1][2])
+    #     pos_tail[2] = pbone.head[2] + tmp_len * (pbone.bindmat[2][0]*pbone.bindmat[2][1]*pbone.bindmat[2][2])
 
-    if ischildfound:
-        tmp_head = [0.0] * 3
-        for bone in childbonelist:
-            tmp_head[0] += bone.head[0]
-            tmp_head[1] += bone.head[1]
-            tmp_head[2] += bone.head[2]
-        tmp_head[0] /= len(childbonelist)
-        tmp_head[1] /= len(childbonelist)
-        tmp_head[2] /= len(childbonelist)
-        return tmp_head
-    else:
-        tmp_len = 0.0
-        tmp_len += (pbone.head[0] - pbone.parent.head[0]) ** 2
-        tmp_len += (pbone.head[1] - pbone.parent.head[1]) ** 2
-        tmp_len += (pbone.head[2] - pbone.parent.head[2]) ** 2
-        tmp_len = tmp_len ** 0.5 * 0.5
-        pos_tail[0] = pbone.head[0] + tmp_len * pbone.bindmat[0][0]
-        pos_tail[1] = pbone.head[1] + tmp_len * pbone.bindmat[1][0]
-        pos_tail[2] = pbone.head[2] + tmp_len * pbone.bindmat[2][0]
+    pos_tail = pbone.head
 
     return pos_tail
 
@@ -367,7 +367,7 @@ def pskimport(infile,importmesh,importbone,bDebugLogPSK,importmultiuvtextures):
         translationX = indata[8]
         translationY = indata[9]
         translationZ = indata[10]
-        translationMatrix = mathutils.Matrix.Translation(mathutils.Vector((translationX,-translationY,translationZ)))
+        translationMatrix = mathutils.Matrix.Translation(mathutils.Vector((translationX,translationY,translationZ)))
 
         createbone.origmat = rotationMatrix
         createbone.bindmat = translationMatrix * rotationMatrix.to_4x4()
@@ -447,20 +447,17 @@ def pskimport(infile,importmesh,importbone,bDebugLogPSK,importmultiuvtextures):
                 newbone = ob_new.data.edit_bones.new(bone.name)
                 #parent the bone
                 #print("DRI:", dir(newbone))
-                parentbone = None
                 #note bone location is set in the real space or global not local
                 bonesize = bpy.types.Scene.unrealbonesize
                 if bone.name != bone.parent:
-                    pos_x = bone.bindpos[0]
-                    pos_y = bone.bindpos[1]
-                    pos_z = bone.bindpos[2]
                     #print("LINKING:" , bone.parent ,"j")
                     parentbone = ob_new.data.edit_bones[bone.parent]
                     newbone.parent = parentbone
-                    rotmatrix = bone.bindmat
+
                     newbone.head.x = bone.head[0]
                     newbone.head.y = bone.head[1]
                     newbone.head.z = bone.head[2]
+
                     newbone.tail.x = bone.tail[0]
                     newbone.tail.y = bone.tail[1]
                     newbone.tail.z = bone.tail[2]
@@ -474,10 +471,10 @@ def pskimport(infile,importmesh,importbone,bDebugLogPSK,importmultiuvtextures):
                     else:
                         newbone.roll = - parentbone.roll
                 else:
-                    rotmatrix = bone.bindmat
                     newbone.head.x = bone.head[0]
                     newbone.head.y = bone.head[1]
                     newbone.head.z = bone.head[2]
+
                     newbone.tail.x = bone.tail[0]
                     newbone.tail.y = bone.tail[1]
                     newbone.tail.z = bone.tail[2]
