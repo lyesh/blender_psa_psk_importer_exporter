@@ -1,33 +1,25 @@
 import bpy
-# import mathutils
-import math
-import types
-from mathutils import Vector
-from math import *
 from bpy.props import *
-from string import *
 from struct import *
-from math import *
-from bpy.props import *
 
 SIGNATURE = 0xDEADC0DE
 
-def get_rip_file(input_file):
 
+def get_rip_file(input_file):
     texture_files = []
     shader_files = []
     faces = []
     vertices = []
-    vertex_attribute_types = []
+    vertex_attributes = []
     input_stream = open(input_file, "rb")
     mesh_name = input_file.split('/')[-1].split('.')[0]
 
     mesh = bpy.data.meshes.new(mesh_name)
-    (signature,version) = unpack('2I', input_stream.read(8))
-    assert(signature == SIGNATURE)
+    (signature, version) = unpack('2I', input_stream.read(8))
+    assert (signature == SIGNATURE)
     if version != 4:
         print("Unsupported version: %i", version)
-        assert(False)
+        raise NinjaRipError
 
     input_data = unpack('6I', input_stream.read(24))
     num_faces = input_data[0]
@@ -38,19 +30,7 @@ def get_rip_file(input_file):
     num_vertex_attributes = input_data[5]
 
     for vertex_attribute_index in range(0, num_vertex_attributes):
-        attribute_type = get_cstring(input_stream)
-        input_data = unpack('4I', input_stream.read(16))
-        attribute_index = input_data[0]
-        offset = input_data[1]
-        size = input_data[2]
-        type_map_elements = input_data[3]
-        for type_element_index in range(0,type_map_elements):
-            input_data = unpack('I',input_stream.read(4))
-            vertex_attribute_types.append(input_data[0])
-
-        if attribute_type == b'POSITION':
-            pass
-
+        vertex_attributes.append(VertexAttribute(input_stream))
 
     for texture_file_index in range(0, num_texture_files):
         texture_files.append(get_cstring(input_stream))
@@ -59,17 +39,18 @@ def get_rip_file(input_file):
         shader_files.append(get_cstring(input_stream))
 
     for face_index in range(0, num_faces):
-        input_data = unpack('3I',input_stream.read(12))
-        faces.append((input_data[0],input_data[1],input_data[2]))
+        input_data = unpack('3I', input_stream.read(12))
+        faces.append((input_data[0], input_data[1], input_data[2]))
 
     for vertex_index in range(0, num_vertices):
-        input_data = unpack('3f',input_stream.read(12))
-        vertices.append(Vector((input_data[0],input_data[1],input_data[2])))
-        for vertex_attribute_index in range(3, len(vertex_attribute_types)):
-            get_data_of_type(input_stream,vertex_attribute_types[vertex_attribute_index])
+        vertex = Vertex()
+        # input_data = unpack('3f',input_stream.read(12))
+        # vertices.append(Vector((input_data[0],input_data[1],input_data[2])))
+        for vertex_attribute in vertex_attributes:
+            vertex.add_attribute(vertex_attribute, input_stream)
+        vertices.append(vertex)
 
     return
-
 
 
 def get_cstring(stream):
@@ -81,17 +62,46 @@ def get_cstring(stream):
         result += byte
     return "FAIL"
 
-def get_data_of_type(stream,type):
-    if type == 0:
-        return unpack("f",stream.read(4))
-    elif type == 1:
-        return unpack("I",stream.read(4))
-    elif type == 2:
-        return unpack("i",stream.read(4))
+
+def get_data_of_type(stream, data_type):
+    if data_type == 0:
+        return unpack("f", stream.read(4))[0]
+    elif data_type == 1:
+        return unpack("I", stream.read(4))[0]
+    elif data_type == 2:
+        return unpack("i", stream.read(4))[0]
     else:
-        raise(NinjaRipError)
+        raise NinjaRipError
+
 
 class NinjaRipError(Exception):
     pass
 
-get_rip_file("/Users/ailish/Mesh_0778.rip")
+
+class VertexAttribute:
+    def __init__(self, stream):
+        self.vertex_attribute_types = []
+        self.attribute_type = get_cstring(stream)
+        input_data = unpack('4I', stream.read(16))
+        self.attribute_index = input_data[0]
+        self.offset = input_data[1]
+        self.size = input_data[2]
+        self.type_map_elements = input_data[3]
+
+        for type_element_index in range(0, self.type_map_elements):
+            input_data = unpack('I', stream.read(4))
+            self.vertex_attribute_types.append(input_data[0])
+
+
+class Vertex:
+    def __init__(self):
+        self.attributes = {}
+
+    def add_attribute(self, attribute, stream):
+        vector = []
+        for type_element in attribute.vertex_attribute_types:
+            vector.append(get_data_of_type(stream, type_element))
+        self.attributes[attribute.attribute_type.decode(encoding="ascii")] = vector
+
+
+get_rip_file("resources/Mesh_0778.rip")
