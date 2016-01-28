@@ -50,6 +50,14 @@ def get_rip_file(input_file):
             vertex.add_attribute(vertex_attribute, input_stream)
         vertices.append(vertex)
 
+    verts = []
+
+    for vertex in vertices:
+        verts.append(vertex.attributes['POSITION'])
+
+    mesh.from_pydata(verts,[],faces)
+    mesh.update(calc_edges=True)
+    mesh.validate(verbose=True)
     return
 
 
