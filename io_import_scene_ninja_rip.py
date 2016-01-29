@@ -14,7 +14,6 @@ def get_rip_file(input_file):
     input_stream = open(input_file, "rb")
     mesh_name = input_file.split('/')[-1].split('.')[0]
 
-    mesh = bpy.data.meshes.new(mesh_name)
     (signature, version) = unpack('2I', input_stream.read(8))
     assert (signature == SIGNATURE)
     if version != 4:
@@ -55,9 +54,17 @@ def get_rip_file(input_file):
     for vertex in vertices:
         verts.append(vertex.attributes['POSITION'])
 
+    mesh = bpy.data.meshes.new(mesh_name)
+    ob = bpy.data.objects.new(mesh_name, mesh)
+    scn = bpy.context.scene
+    scn.objects.link(ob)
+    scn.objects.active = ob
+    ob.select = True
+
     mesh.from_pydata(verts,[],faces)
     mesh.update(calc_edges=True)
-    mesh.validate(verbose=True)
+    ob.select = False
+
     return
 
 
@@ -111,5 +118,6 @@ class Vertex:
             vector.append(get_data_of_type(stream, type_element))
         self.attributes[attribute.attribute_type.decode(encoding="ascii")] = vector
 
+for i in range(200,240):
+    get_rip_file("/Users/ailish/bathroom-scene/Mesh_0"+str(i)+".rip")
 
-get_rip_file("resources/Mesh_0778.rip")
