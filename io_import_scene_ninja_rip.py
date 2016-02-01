@@ -1,4 +1,6 @@
 import bpy
+import bmesh
+import mathutils
 from bpy.props import *
 from struct import *
 
@@ -49,11 +51,6 @@ def get_rip_file(input_file):
             vertex.add_attribute(vertex_attribute, input_stream)
         vertices.append(vertex)
 
-    verts = []
-
-    for vertex in vertices:
-        verts.append(vertex.attributes['POSITION'])
-
     mesh = bpy.data.meshes.new(mesh_name)
     ob = bpy.data.objects.new(mesh_name, mesh)
     scn = bpy.context.scene
@@ -61,8 +58,19 @@ def get_rip_file(input_file):
     scn.objects.active = ob
     ob.select = True
 
-    mesh.from_pydata(verts,[],faces)
-    mesh.update(calc_edges=True)
+    # mesh.from_pydata(verts,[],faces)
+    # mesh.update(calc_edges=True)
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+
+    for idx, vertex in enumerate(vertices):
+        vert = bm.verts.new(vertex.attributes['POSITION'])
+        vert.normal = mathutils.Vector(vertex.attributes['NORMAL'])
+        vert.index = idx
+
+    for face in faces:
+        face = bm.faces.new(bm.verts.)
+
     ob.select = False
 
     return
