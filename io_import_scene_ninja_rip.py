@@ -65,11 +65,20 @@ def get_rip_file(input_file):
 
     for idx, vertex in enumerate(vertices):
         vert = bm.verts.new(vertex.attributes['POSITION'])
-        vert.normal = mathutils.Vector(vertex.attributes['NORMAL'])
+        # vert.normal = mathutils.Vector(vertex.attributes['NORMAL'])
         vert.index = idx
+    bm.verts.ensure_lookup_table()
 
-    for face in faces:
-        face = bm.faces.new(bm.verts.)
+    for raw_face in faces:
+        face = bm.faces.new((bm.verts[raw_face[0]],bm.verts[raw_face[1]],bm.verts[raw_face[2]]))
+        uv_layer = bm.loops.layers.uv.verify()
+        # bm.faces.layers.tex.verify()
+        face.loops.index_update()
+        for idx, loop in enumerate(face.loops):
+            uv = loop[uv_layer].uv
+            uvs = vertices[loop.vert.index].attributes['TEXCOORD']
+            uv[0] = uvs[0]
+            # uv[1] = uvs[1]
 
     ob.select = False
 
@@ -126,6 +135,6 @@ class Vertex:
             vector.append(get_data_of_type(stream, type_element))
         self.attributes[attribute.attribute_type.decode(encoding="ascii")] = vector
 
-for i in range(200,240):
-    get_rip_file("/Users/ailish/bathroom-scene/Mesh_0"+str(i)+".rip")
-
+# for i in range(200,240):
+#     get_rip_file("/Users/ailish/bathroom-scene/Mesh_0"+str(i)+".rip")
+get_rip_file("resources/Mesh_0778.rip")
