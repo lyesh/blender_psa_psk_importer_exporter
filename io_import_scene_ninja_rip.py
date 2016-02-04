@@ -45,8 +45,6 @@ def get_rip_file(input_file):
 
     for vertex_index in range(0, num_vertices):
         vertex = Vertex()
-        # input_data = unpack('3f',input_stream.read(12))
-        # vertices.append(Vector((input_data[0],input_data[1],input_data[2])))
         for vertex_attribute in vertex_attributes:
             vertex.add_attribute(vertex_attribute, input_stream)
         vertices.append(vertex)
@@ -58,8 +56,6 @@ def get_rip_file(input_file):
     scn.objects.active = ob
     ob.select = True
 
-    # mesh.from_pydata(verts,[],faces)
-    # mesh.update(calc_edges=True)
     bm = bmesh.new()
     bm.from_mesh(mesh)
 
