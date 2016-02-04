@@ -64,7 +64,7 @@ def get_rip_file(input_file):
     bm.from_mesh(mesh)
 
     for idx, vertex in enumerate(vertices):
-        vert = bm.verts.new(vertex.attributes['POSITION'])
+        vert = bm.verts.new(vertex.attributes['POSITION'][0:3])
         # vert.normal = mathutils.Vector(vertex.attributes['NORMAL'])
         vert.index = idx
     bm.verts.ensure_lookup_table()
@@ -78,8 +78,9 @@ def get_rip_file(input_file):
             uv = loop[uv_layer].uv
             uvs = vertices[loop.vert.index].attributes['TEXCOORD']
             uv[0] = uvs[0]
-            # uv[1] = uvs[1]
+            uv[1] = 1 - uvs[1]
 
+    bm.to_mesh(mesh)
     ob.select = False
 
     return
@@ -130,11 +131,13 @@ class Vertex:
         self.attributes = {}
 
     def add_attribute(self, attribute, stream):
+        attributeName = attribute.attribute_type.decode(encoding="ascii")
         vector = []
         for type_element in attribute.vertex_attribute_types:
             vector.append(get_data_of_type(stream, type_element))
-        self.attributes[attribute.attribute_type.decode(encoding="ascii")] = vector
+        if not attributeName in self.attributes:
+            self.attributes[attributeName] = vector
 
 # for i in range(200,240):
 #     get_rip_file("/Users/ailish/bathroom-scene/Mesh_0"+str(i)+".rip")
-get_rip_file("resources/Mesh_0778.rip")
+get_rip_file("resources/Mesh_0785.rip")
