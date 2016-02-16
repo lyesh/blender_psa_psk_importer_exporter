@@ -5,7 +5,8 @@ from bpy.props import *
 from struct import *
 
 SIGNATURE = 0xDEADC0DE
-
+WORKING_DIRECTORY = "/Users/ailish/bathroom-scene/"
+vert_tracker = {}
 
 def get_rip_file(input_file):
     texture_files = []
@@ -29,6 +30,11 @@ def get_rip_file(input_file):
     num_texture_files = input_data[3]
     num_shader_files = input_data[4]
     num_vertex_attributes = input_data[5]
+
+    if num_vertices in vert_tracker:
+        return
+    else:
+        vert_tracker[num_vertices] = True
 
     for vertex_attribute_index in range(0, num_vertex_attributes):
         vertex_attributes.append(VertexAttribute(input_stream))
@@ -71,12 +77,31 @@ def get_rip_file(input_file):
         # bm.faces.layers.tex.verify()
         face.loops.index_update()
         for idx, loop in enumerate(face.loops):
-            uv = loop[uv_layer].uv
-            uvs = vertices[loop.vert.index].attributes['TEXCOORD']
-            uv[0] = uvs[0]
-            uv[1] = 1 - uvs[1]
+            if 'TEXCOORD' in vertices[loop.vert.index].attributes:
+                uv = loop[uv_layer].uv
+                uvs = vertices[loop.vert.index].attributes['TEXCOORD']
+                uv[0] = uvs[0]
+                uv[1] = 1 - uvs[1]
+    material = bpy.data.materials.new(name=mesh_name)
+
+    for texture_file in texture_files:
+        try:
+            img = bpy.data.images.load(WORKING_DIRECTORY + texture_file)
+        except:
+            raise NameError("Cannot load texture %s" % texture_file)
+
+        cTex = bpy.data.textures.new('ColorTex', type='IMAGE')
+        cTex.image = img
+        mtex = material.texture_slots.add()
+        mtex.texture = cTex
+        mtex.texture_coords = 'UV'
+        mtex.use_map_color_diffuse = True
+        mtex.mapping = 'FLAT'
+    ob.data.materials.append(material)
+
 
     bm.to_mesh(mesh)
+
     ob.select = False
 
     return
@@ -87,7 +112,7 @@ def get_cstring(stream):
     while True:
         byte = stream.read(1)
         if byte == b'\x00':
-            return result
+            return result.decode(encoding="ascii")
         result += byte
     return "FAIL"
 
@@ -127,13 +152,13 @@ class Vertex:
         self.attributes = {}
 
     def add_attribute(self, attribute, stream):
-        attributeName = attribute.attribute_type.decode(encoding="ascii")
+        attributeName = attribute.attribute_type
         vector = []
         for type_element in attribute.vertex_attribute_types:
             vector.append(get_data_of_type(stream, type_element))
         if not attributeName in self.attributes:
             self.attributes[attributeName] = vector
 
-# for i in range(200,240):
-#     get_rip_file("/Users/ailish/bathroom-scene/Mesh_0"+str(i)+".rip")
-get_rip_file("resources/Mesh_0785.rip")
+for i in range(200,240):
+    get_rip_file(WORKING_DIRECTORY + "Mesh_0"+str(i)+".rip")
+# get_rip_file(WORKING_DIRECTORY + "Mesh_0785.rip")

@@ -319,7 +319,7 @@ def setup_uv_textures(faceuv, materialcount, me_ob):
     print("INIT UV TEXTURE...")
     _matcount = 0
     # for mattexcount in materials:
-    # print("MATERAIL ID:", _matcount)
+    # print("MATERIAL ID:", _matcount)
     _textcount = 0
     for uv in me_ob.tessface_uv_textures:  # uv texture
         print("UV TEXTURE ID:", _textcount)
