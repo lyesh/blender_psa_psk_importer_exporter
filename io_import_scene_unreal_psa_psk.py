@@ -16,13 +16,19 @@
 #
 # ##### END GPL LICENSE BLOCK #####
 
+import bpy
+import mathutils
+import math
+import struct
+import bpy.props
+
 bl_info = {
     "name": "Import Unreal Skeleton Mesh (.psk)/Animation Set (psa)",
     "author": "Darknet, flufy3d, camg188",
     "version": (2, 2),
     "blender": (2, 64, 0),
     "location": "File > Import > Skeleton Mesh (.psk)/Animation Set (psa)",
-    "description": "Import Skeleleton Mesh/Animation Data",
+    "description": "Import Skeleton Mesh/Animation Data",
     "warning": "",
     "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.5/Py/"
                 "Scripts/Import-Export/Unreal_psk_psa",
@@ -43,19 +49,7 @@ Imports a *psk file to a new mesh
 -Export Text Log From Current Location File (Bool )
 """
 
-import bpy
-import mathutils
-import math
-# XXX Yuck! 'from foo import *' is really bad!
-from mathutils import *
-from math import *
-from bpy.props import *
-from string import *
-from struct import *
-from math import *
-from bpy.props import *
-
-bpy.types.Scene.unrealbonesize = FloatProperty(
+bpy.types.Scene.unrealbonesize = bpy.props.FloatProperty(
     name="Bone Length",
     description="Bone Length from head to tail distance",
     default=1, min=0.001, max=1000
@@ -185,7 +179,7 @@ def pskimport(infile,importmesh,importbone,bDebugLogPSK,importmultiuvtextures,is
     print("objName:",objName)
     printlog(("New Mesh = " + me_ob.name + "\n"))
     #read general header
-    indata = unpack('20s3i', pskfile.read(32))
+    indata = struct.unpack('20s3i', pskfile.read(32))
     #not using the general header at this time
 
     verts, verts2 = get_vertices(printlog, pskfile)
@@ -351,7 +345,7 @@ def setup_uv_textures(faceuv, materialcount, me_ob):
 
 
 def get_bone_weights(printlog, pskfile):
-    indata = unpack('20s3i', pskfile.read(32))
+    indata = struct.unpack('20s3i', pskfile.read(32))
     recCount = indata[3]
     printlog("Nbr of RAWW0000 records: " + str(recCount) + "\n")
     # RAWW0000 fields: Weight|PntIdx|BoneIdx
@@ -359,7 +353,7 @@ def get_bone_weights(printlog, pskfile):
     counter = 0
     while counter < recCount:
         counter = counter + 1
-        indata = unpack('fii', pskfile.read(12))
+        indata = struct.unpack('fii', pskfile.read(12))
         RWghts.append([indata[1], indata[2], indata[0]])
         # print("weight:", [indata[1], indata[2], indata[0]])
     # RWghts fields = PntIdx|BoneIdx|Weight
@@ -395,7 +389,7 @@ def get_bone_weights(printlog, pskfile):
 
 
 def get_bones(importbone, printlog, pskfile):
-    indata = unpack('20s3i', pskfile.read(32))
+    indata = struct.unpack('20s3i', pskfile.read(32))
     recCount = indata[3]
     printlog("Nbr of REFSKEL0 records: " + str(recCount) + "\n")
     # REFSKEL0 fields - Name|Flgs|NumChld|PrntIdx|Qw|Qx|Qy|Qz|LocX|LocY|LocZ|Lngth|XSize|YSize|ZSize
@@ -410,7 +404,7 @@ def get_bones(importbone, printlog, pskfile):
     print("---PRASE--BONES---")
     printlog("Name|Flgs|NumChld|PrntIdx|Qx|Qy|Qz|Qw|LocX|LocY|LocZ|Lngth|XSize|YSize|ZSize\n")
     while counter < recCount:
-        indata = unpack('64s3i11f', pskfile.read(120))
+        indata = struct.unpack('64s3i11f', pskfile.read(120))
         # print( "DATA",str(indata))
 
         bone.append(indata)
@@ -444,7 +438,7 @@ def get_bones(importbone, printlog, pskfile):
         rotz = indata[6]
         rotw = indata[7]
         # default is w, x, y, z
-        rotationMatrix = mathutils.Quaternion((rotw, rotx, roty, rotz)).to_matrix()
+        rotationMatrix = Quaternion((rotw, rotx, roty, rotz)).to_matrix()
 
         translationX = indata[8]
         translationY = indata[9]
@@ -594,7 +588,7 @@ def get_bones(importbone, printlog, pskfile):
 
 
 def get_vertices(printlog, pskfile):
-    indata = unpack('20s3i', pskfile.read(32))
+    indata = struct.unpack('20s3i', pskfile.read(32))
     recCount = indata[3]
     printlog(("Nbr of PNTS0000 records: " + str(recCount) + "\n"))
     counter = 0
@@ -602,7 +596,7 @@ def get_vertices(printlog, pskfile):
     verts2 = []
     while counter < recCount:
         counter = counter + 1
-        indata = unpack('3f', pskfile.read(12))
+        indata = struct.unpack('3f', pskfile.read(12))
         # print(indata[0], indata[1], indata[2])
         verts.extend([(indata[0], indata[1], indata[2])])
         verts2.extend([(indata[0], indata[1], indata[2])])
@@ -613,7 +607,7 @@ def get_vertices(printlog, pskfile):
 
 
 def get_face_data(UVCoords, printlog, pskfile):
-    indata = unpack('20s3i', pskfile.read(32))
+    indata = struct.unpack('20s3i', pskfile.read(32))
     recCount = indata[3]
     printlog("Nbr of FACE0000 records: " + str(recCount) + "\n")
     # PSK FACE0000 fields: WdgIdx1|WdgIdx2|WdgIdx3|MatIdx|AuxMatIdx|SmthGrp
@@ -627,7 +621,7 @@ def get_face_data(UVCoords, printlog, pskfile):
     printlog("nWdgIdx1|WdgIdx2|WdgIdx3|MatIdx|AuxMatIdx|SmthGrp \n")
     while counter < recCount:
         counter = counter + 1
-        indata = unpack('hhhbbi', pskfile.read(12))
+        indata = struct.unpack('hhhbbi', pskfile.read(12))
         printlog(str(indata[0]) + "|" + str(indata[1]) + "|" + str(indata[2]) + "|" + str(indata[3]) + "|" +
                  str(indata[4]) + "|" + str(indata[5]) + "\n")
         # indata[0] = index of UVCoords
@@ -670,7 +664,7 @@ def get_face_data(UVCoords, printlog, pskfile):
 
 
 def get_uv_data(printlog, pskfile):
-    indata = unpack('20s3i', pskfile.read(32))
+    indata = struct.unpack('20s3i', pskfile.read(32))
     recCount = indata[3]
     printlog("Nbr of VTXW0000 records: " + str(recCount) + "\n")
     counter = 0
@@ -679,7 +673,7 @@ def get_uv_data(printlog, pskfile):
     printlog("[index to PNTS, U coord, v coord]\n");
     while counter < recCount:
         counter = counter + 1
-        indata = unpack('hhffhh', pskfile.read(16))
+        indata = struct.unpack('hhffhh', pskfile.read(16))
         UVCoords.append([indata[0], indata[2], indata[3]])
         printlog(str(indata[0]) + "|" + str(indata[2]) + "|" + str(indata[3]) + "\n")
         # print('mat index %i', indata(4))
@@ -689,7 +683,7 @@ def get_uv_data(printlog, pskfile):
 
 
 def get_materials(printlog, pskfile):
-    indata = unpack('20s3i', pskfile.read(32))
+    indata = struct.unpack('20s3i', pskfile.read(32))
     recCount = indata[3]
     printlog("Nbr of MATT0000 records: " + str(recCount) + "\n")
     printlog(" - Not importing any material data now. PSKs are texture wrapped! \n")
@@ -697,7 +691,7 @@ def get_materials(printlog, pskfile):
     materialcount = 0
     while counter < recCount:
         counter = counter + 1
-        indata = unpack('64s6i', pskfile.read(88))
+        indata = struct.unpack('64s6i', pskfile.read(88))
         materialcount += 1
         print("Material", counter)
         print("Mat name %s", indata[0])
@@ -736,35 +730,35 @@ class IMPORT_OT_psk(bpy.types.Operator):
 
     # List of operator properties, the attributes will be assigned
     # to the class instance from the operator settings before calling.
-    filepath = StringProperty(
+    filepath = bpy.props.StringProperty(
         subtype='FILE_PATH',
     )
-    filter_glob = StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.psk",
         options={'HIDDEN'},
     )
-    importmesh = BoolProperty(
+    importmesh = bpy.props.BoolProperty(
         name="Mesh",
         description="Import mesh only. (not yet build.)",
         default=True,
     )
-    importbone = BoolProperty(
+    importbone = bpy.props.BoolProperty(
         name="Bones",
         description="Import bones only. Current not working yet",
         default=True,
     )
-    importmultiuvtextures = BoolProperty(
+    importmultiuvtextures = bpy.props.BoolProperty(
         name="Single UV Texture(s)",
         description="Single or Multi uv textures",
         default=True,
     )
-    bDebugLogPSK = BoolProperty(
+    bDebugLogPSK = bpy.props.BoolProperty(
         name="Debug Log.txt",
         description="Log the output of raw format. It will save in "
                     "current file dir. Note this just for testing",
         default=False,
     )
-    unrealbonesize = FloatProperty(
+    unrealbonesize = bpy.props.FloatProperty(
         name="Bone Length",
         description="Bone Length from head to tail distance",
         default=1,
@@ -817,13 +811,13 @@ def psaimport(filename,context):
 
     printlog('-----------Log File------------\n')
     #General Header
-    indata = unpack('20s3i', psafile.read(32))
+    indata = struct.unpack('20s3i', psafile.read(32))
     printlogplus('ChunkID', indata[0])
     printlogplus('TypeFlag', indata[1])
     printlogplus('DataSize', indata[2])
     printlogplus('DataCount', indata[3])
     #Bones Header
-    indata = unpack('20s3i', psafile.read(32))
+    indata = struct.unpack('20s3i', psafile.read(32))
     printlogplus('ChunkID', indata[0])
     printlogplus('TypeFlag', indata[1])
     printlogplus('DataSize', indata[2])
@@ -836,7 +830,7 @@ def psaimport(filename,context):
     counter = 0
     nobonematch = True
     while counter < recCount:
-        indata = unpack('64s3i11f', psafile.read(120))
+        indata = struct.unpack('64s3i11f', psafile.read(120))
         #printlogplus('bone', indata[0])
         bonename = str(bytes.decode(indata[0]).strip(bytes.decode(b'\x00')))
         if bonename in bpy.data.armatures['armaturedata'].bones.keys():
@@ -853,7 +847,7 @@ def psaimport(filename,context):
         return
 
     #Animations Header
-    indata = unpack('20s3i', psafile.read(32))
+    indata = struct.unpack('20s3i', psafile.read(32))
     printlogplus('ChunkID', indata[0])
     printlogplus('TypeFlag', indata[1])
     printlogplus('DataSize', indata[2])
@@ -864,7 +858,7 @@ def psaimport(filename,context):
     Raw_Key_Nums = 0
     Action_List = []
     while counter < recCount:
-        indata = unpack('64s64s4i3f3i', psafile.read(64 + 64 + 4 * 4 + 3 * 4 + 3 * 4))
+        indata = struct.unpack('64s64s4i3f3i', psafile.read(64 + 64 + 4 * 4 + 3 * 4 + 3 * 4))
         printlogplus('Name', indata[0])
         printlogplus('Group', indata[1])
         printlogplus('totalbones', indata[2])
@@ -881,7 +875,7 @@ def psaimport(filename,context):
 
     #Raw keys Header
     Raw_Key_List = []
-    indata = unpack('20s3i', psafile.read(32))
+    indata = struct.unpack('20s3i', psafile.read(32))
     printlogplus('ChunkID', indata[0])
     printlogplus('TypeFlag', indata[1])
     printlogplus('DataSize', indata[2])
@@ -893,7 +887,7 @@ def psaimport(filename,context):
     recCount = Raw_Key_Nums
     counter = 0
     while counter < recCount:
-        indata = unpack('3f4f1f', psafile.read(3 * 4 + 4 * 4 + 4))
+        indata = struct.unpack('3f4f1f', psafile.read(3 * 4 + 4 * 4 + 4))
         pos = mathutils.Vector((indata[0], indata[1], indata[2]))
         quat = mathutils.Quaternion((indata[6], indata[3], indata[4], indata[5]))
         time = indata[7]
@@ -930,10 +924,10 @@ def psaimport(filename,context):
         name = bone.name
         ori_matrix = bone.matrix
         matrix = bone.matrix_local.to_3x3()
-        bone_rest_matrix = Matrix(matrix)
+        bone_rest_matrix = mathutils.Matrix(matrix)
         #bone_rest_matrix = bone.matrix_local.to_3x3()
         #bone_rest_matrix = bone.matrix_local.to_quaternion().conjugated().to_matrix()
-        bone_rest_matrix_inv = Matrix(bone_rest_matrix)
+        bone_rest_matrix_inv = mathutils.Matrix(bone_rest_matrix)
         bone_rest_matrix_inv.invert()
         bone_rest_matrix_inv.resize_4x4()
         bone_rest_matrix.resize_4x4()
@@ -976,7 +970,7 @@ def psaimport(filename,context):
                     mat = Matrix()
                     if pbone.parent != None:
                         quat = quat.conjugated()
-                        mat = Matrix.Translation(pos) * quat.to_matrix().to_4x4()
+                        mat = mathutils.Matrix.Translation(pos) * quat.to_matrix().to_4x4()
                         mat = pose_bones[bName].parent.matrix * mat
                         #mat = pbone.parent.Transform * mat
                     else:
@@ -1043,10 +1037,10 @@ class IMPORT_OT_psa(bpy.types.Operator):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
 
-    filepath = StringProperty(
+    filepath = bpy.props.StringProperty(
         subtype='FILE_PATH',
     )
-    filter_glob = StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.psa",
         options={'HIDDEN'},
     )
@@ -1067,10 +1061,10 @@ class IMPORT_OT_psa(bpy.types.Operator):
     bl_space_type = "PROPERTIES"
     bl_region_type = "WINDOW"
 
-    filepath = StringProperty(
+    filepath = bpy.props.StringProperty(
         subtype='FILE_PATH',
     )
-    filter_glob = StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.psa",
         options={'HIDDEN'},
     )
@@ -1084,15 +1078,15 @@ class IMPORT_OT_psa(bpy.types.Operator):
         wm.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-bpy.types.Scene.udk_importpsk = StringProperty(
+bpy.types.Scene.udk_importpsk = bpy.props.StringProperty(
     name = "Import .psk",
     description = "Skeleton mesh file path for psk",
     default = "")
-bpy.types.Scene.udk_importpsa = StringProperty(
+bpy.types.Scene.udk_importpsa = bpy.props.StringProperty(
     name = "Import .psa",
     description = "Animation Data to Action Set(s) file path for psa",
     default = "")
-bpy.types.Scene.udk_importarmatureselect = BoolProperty(
+bpy.types.Scene.udk_importarmatureselect = bpy.props.BoolProperty(
     name = "Armature Selected",
     description = "Select Armature to Import psa animation data",
     default = False)
@@ -1103,7 +1097,7 @@ class Panel_UDKImport(bpy.types.Panel):
     bl_space_type = "VIEW_3D"
     bl_region_type = "TOOLS"
 
-    filepath = StringProperty(
+    filepath = bpy.props.StringProperty(
         subtype='FILE_PATH',
     )
 
@@ -1127,35 +1121,35 @@ class OBJECT_OT_PSKPath(bpy.types.Operator):
     bl_idname = "object.pskpath"
     bl_label = "Import PSK Path"
 
-    filepath = StringProperty(
+    filepath = bpy.props.StringProperty(
         subtype='FILE_PATH',
     )
-    filter_glob = StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.psk",
         options={'HIDDEN'},
     )
-    importmesh = BoolProperty(
+    importmesh = bpy.props.BoolProperty(
         name="Mesh",
         description="Import mesh only. (not yet build.)",
         default=True,
     )
-    importbone = BoolProperty(
+    importbone = bpy.props.BoolProperty(
         name="Bones",
         description="Import bones only. Current not working yet",
         default=True,
     )
-    importmultiuvtextures = BoolProperty(
+    importmultiuvtextures = bpy.props.BoolProperty(
         name="Single UV Texture(s)",
         description="Single or Multi uv textures",
         default=True,
     )
-    bDebugLogPSK = BoolProperty(
+    bDebugLogPSK = bpy.props.BoolProperty(
         name="Debug Log.txt",
         description="Log the output of raw format. It will save in " \
                     "current file dir. Note this just for testing",
         default=False,
     )
-    unrealbonesize = FloatProperty(
+    unrealbonesize = bpy.props.FloatProperty(
         name="Bone Length",
         description="Bone Length from head to tail distance",
         default=1,
@@ -1178,25 +1172,26 @@ class OBJECT_OT_PSKPath(bpy.types.Operator):
 
 class UDKImportArmaturePG(bpy.types.PropertyGroup):
     #boolean = BoolProperty(default=False)
-    string = StringProperty()
-    bexport = BoolProperty(default=False, name="Export", options={"HIDDEN"},
+    string = bpy.props.StringProperty()
+    bexport = bpy.props.BoolProperty(default=False, name="Export", options={"HIDDEN"},
                            description = "This will be ignore when exported")
-    bselect = BoolProperty(default=False, name="Select", options={"HIDDEN"},
+    bselect = bpy.props.BoolProperty(default=False, name="Select", options={"HIDDEN"},
                            description = "This will be ignore when exported")
-    otype = StringProperty(name="Type",description = "This will be ignore when exported")
+    otype = bpy.props.StringProperty(name="Type",description = "This will be ignore when exported")
 
 bpy.utils.register_class(UDKImportArmaturePG)
-bpy.types.Scene.udkimportarmature_list = CollectionProperty(type=UDKImportArmaturePG)
-bpy.types.Scene.udkimportarmature_list_idx = IntProperty()
+# noinspection PyUnresolvedReferences,PyUnresolvedReferences,PyUnresolvedReferences
+bpy.types.Scene.udkimportarmature_list = bpy.props.CollectionProperty(type=UDKImportArmaturePG)
+bpy.types.Scene.udkimportarmature_list_idx = bpy.props.IntProperty()
 
 class OBJECT_OT_PSAPath(bpy.types.Operator):
     """Select .psa file path to import for animation data"""
     bl_idname = "object.psapath"
     bl_label = "Import PSA Path"
 
-    filepath = StringProperty(name="PSA File Path", description="Filepath used for importing the PSA file",
+    filepath = bpy.props.StringProperty(name="PSA File Path", description="Filepath used for importing the PSA file",
                               maxlen=1024, default="")
-    filter_glob = StringProperty(
+    filter_glob = bpy.props.StringProperty(
         default="*.psa",
         options={'HIDDEN'},
     )
