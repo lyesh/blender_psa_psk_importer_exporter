@@ -110,13 +110,6 @@ def getheadpos(pbone, bones):
     # pos = mathutils.Vector((x,y,z)) * pbone.origmat
     pos = pbone.bindmat.to_translation()
 
-    """
-    tmp_bone = pbone
-    while tmp_bone.name != tmp_bone.parent.name:
-        pos = pos * tmp_bone.parent.bindmat
-        tmp_bone = tmp_bone.parent
-    """
-
     pos_head[0] = pos.x
     pos_head[1] = - pos.y
     pos_head[2] = pos.z
@@ -126,33 +119,6 @@ def getheadpos(pbone, bones):
 
 def gettailpos(pbone, bones):
     pos_tail = [0.0] * 3
-    # ischildfound = False
-    # childbonelist = []
-    # for bone in bones:
-    #     if bone.parent.name == pbone.name:
-    #         ischildfound = True
-    #         childbonelist.append(bone)
-    #
-    # if ischildfound:
-    #     tmp_head = [0.0] * 3
-    #     for bone in childbonelist:
-    #         tmp_head[0] += bone.head[0]
-    #         tmp_head[1] += bone.head[1]
-    #         tmp_head[2] += bone.head[2]
-    #     tmp_head[0] /= len(childbonelist)
-    #     tmp_head[1] /= len(childbonelist)
-    #     tmp_head[2] /= len(childbonelist)
-    #     return tmp_head
-    # else:
-    #     tmp_len = 0.0
-    #     tmp_len += (pbone.head[0] - pbone.parent.head[0]) ** 2
-    #     tmp_len += (pbone.head[1] - pbone.parent.head[1]) ** 2
-    #     tmp_len += (pbone.head[2] - pbone.parent.head[2]) ** 2
-    #     tmp_len = tmp_len ** 0.5 * 0.5
-    #     pos_tail[0] = pbone.head[0] + tmp_len * (pbone.bindmat[0][0]*pbone.bindmat[0][1]*pbone.bindmat[0][2])
-    #     pos_tail[1] = pbone.head[1] + tmp_len * (pbone.bindmat[1][0]*pbone.bindmat[1][1]*pbone.bindmat[1][2])
-    #     pos_tail[2] = pbone.head[2] + tmp_len * (pbone.bindmat[2][0]*pbone.bindmat[2][1]*pbone.bindmat[2][2])
-
     pos_tail = pbone.head
 
     return pos_tail
@@ -442,7 +408,7 @@ def get_bones(importbone, printlog, pskfile):
         rotz = indata[6]
         rotw = indata[7]
         # default is w, x, y, z
-        rotationMatrix = Quaternion((rotw, rotx, roty, rotz)).to_matrix()
+        rotationMatrix = mathutils.Quaternion((rotw, rotx, roty, rotz)).to_matrix()
 
         translationX = indata[8]
         translationY = indata[9]
@@ -796,6 +762,7 @@ class psa_bone:
         self.parent = None
 
 
+# noinspection SpellCheckingInspection
 def psaimport(filename, context):
     global logf, logf
     print("--------------------------------------------------")
@@ -907,10 +874,10 @@ def psaimport(filename, context):
         Raw_Key_List.append((pos, quat, time))
         counter += 1
     # Scale keys Header,Scale keys Data,Curve keys Header,Curve keys Data
-    curFilePos = psafile.tell()
+    current_file_position = psafile.tell()
     psafile.seek(0, 2)
-    endFilePos = psafile.tell()
-    if curFilePos == endFilePos:
+    end_file_position = psafile.tell()
+    if current_file_position == end_file_position:
         print('no Scale keys,Curve keys')
 
     # build the animation line
@@ -926,7 +893,7 @@ def psaimport(filename, context):
             # for bone in bpy.data.objects[armature_obj].pose.bones:
             # for objd in bpy.data.objects:
             # print("NAME:", objd.name, " TYPE:", objd.type)
-            # if objd.type == 'ARMARURE':
+            # if objd.type == 'ARMATURE':
             # print(dir(objd))
             armature_list = bpy.context.scene.udkas_list  # armature list array
             armature_idx = bpy.context.scene.udkimportarmature_list_idx  # armature index selected
@@ -1306,5 +1273,5 @@ if __name__ == "__main__":
 # note this only read the data and will not be place in the scene
 # getInputFilename('C:\\blenderfiles\\BotA.psk')
 # getInputFilename('C:\\blenderfiles\\AA.PSK')
-# pskimport('/Users/ailish/chloe-model/SkeletalMesh3/CH_M_Chloe01_EP4.psk', True, True, False, True)
-pskimport('/Users/ailish/ST_Acc_SoapDistrib01.pskx', True, True, False, True, True)
+pskimport('/Users/ailish/chloe-model/SkeletalMesh3/CH_M_Chloe01_EP4.psk', True, True, False, True, False)
+# pskimport('/Users/ailish/ST_Acc_SoapDistrib01.pskx', True, True, False, True, True)
